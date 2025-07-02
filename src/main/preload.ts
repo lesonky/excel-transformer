@@ -30,8 +30,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   
   // Excel处理相关
   parseExcel: (filePath: string, worksheetName?: string) => ipcRenderer.invoke('parse-excel', filePath, worksheetName),
-  transformExcel: (filePath: string, mappings: any[], targetColumn: string) => 
-    ipcRenderer.invoke('transform-excel', filePath, mappings, targetColumn),
+  transformExcel: (params: {
+    filePath: string;
+    columnName: string;
+    mappingRules: { [key: string]: string };
+  }) => ipcRenderer.invoke('transform-excel', params),
   
   // AI服务相关
   generateMappings: (sourceValues: string[], description: string) => 
@@ -41,6 +44,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   selectFile: () => ipcRenderer.invoke('select-file'),
   openFileDialog: (filters?: any[]) => ipcRenderer.invoke('open-file-dialog', filters),
   saveFileDialog: (defaultPath?: string) => ipcRenderer.invoke('save-file-dialog', defaultPath),
+  openFileLocation: (filePath: string) => ipcRenderer.invoke('open-file-location', filePath),
   
   // 系统相关
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),

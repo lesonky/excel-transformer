@@ -25,12 +25,25 @@ export interface ElectronAPI {
   
   // Excel处理相关
   parseExcel: (filePath: string, worksheetName?: string) => Promise<ExcelData>;
-  transformExcel: (filePath: string, mappings: any[], targetColumn: string) => Promise<string>;
+  transformExcel: (params: {
+    filePath: string;
+    columnName: string;
+    mappingRules: { [key: string]: string };
+    onProgress?: (progress: number) => void;
+  }) => Promise<{
+    success: boolean;
+    totalRows: number;
+    transformedRows: number;
+    skippedRows: number;
+    filePath?: string;
+    error?: string;
+  }>;
   
   // 文件操作相关
   selectFile: () => Promise<string | null>;
   openFileDialog: (filters?: any[]) => Promise<string | null>;
   saveFileDialog: (defaultPath?: string) => Promise<string | null>;
+  openFileLocation: (filePath: string) => Promise<void>;
   
   // 系统相关
   getAppVersion: () => Promise<string>;

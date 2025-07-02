@@ -7,6 +7,8 @@ import ApiKeySettings from './components/ApiKeySettings/index';
 import StepNavigation from './components/StepNavigation/index';
 import FileUpload from './components/FileUpload/index';
 import { FieldSelectPage } from './pages/FieldSelect';
+import { MappingPage } from './pages/Mapping';
+import { TransformPage } from './pages/Transform';
 import './App.css';
 
 const { Header, Content } = Layout;
@@ -185,40 +187,10 @@ const App: React.FC = () => {
         return <FieldSelectPage />;
       
       case 3:
-        return (
-          <div className="flex-center full-height">
-            <div style={{ textAlign: 'center' }}>
-              <Title level={3}>步骤3: 设置转换</Title>
-              <p>配置AI映射规则</p>
-              <p style={{ color: '#666' }}>此功能正在开发中...</p>
-              
-              <div style={{ marginTop: '24px' }}>
-                <Space>
-                  <Button onClick={prevStep}>上一步</Button>
-                  <Button type="primary" onClick={nextStep}>下一步</Button>
-                </Space>
-              </div>
-            </div>
-          </div>
-        );
+        return <MappingPage />;
       
       case 4:
-        return (
-          <div className="flex-center full-height">
-            <div style={{ textAlign: 'center' }}>
-              <Title level={3}>步骤4: 执行转换</Title>
-              <p>完成字段转换</p>
-              <p style={{ color: '#666' }}>此功能正在开发中...</p>
-              
-              <div style={{ marginTop: '24px' }}>
-                <Space>
-                  <Button onClick={prevStep}>上一步</Button>
-                  <Button type="primary">完成转换</Button>
-                </Space>
-              </div>
-            </div>
-          </div>
-        );
+        return <TransformPage />;
       
       default:
         return (

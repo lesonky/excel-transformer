@@ -243,13 +243,60 @@ ipcMain.handle('parse-excel', async (event, filePath: string, worksheetName?: st
 });
 
 // Excel文件转换处理器
-ipcMain.handle('transform-excel', async (event, inputPath: string, outputPath: string, mappings: any[], targetColumn: string) => {
+ipcMain.handle('transform-excel', async (event, params: {
+  filePath: string;
+  columnName: string;
+  mappingRules: { [key: string]: string };
+}) => {
   try {
-    console.log('转换Excel文件:', inputPath, '到', outputPath);
-    return await ExcelService.transformExcelFile(inputPath, outputPath, targetColumn, mappings);
+    console.log('转换Excel文件:', params);
+    const { filePath, columnName, mappingRules } = params;
+    
+    // 如果没有提供文件路径，使用当前加载的文件
+    let inputPath = filePath;
+    if (!inputPath) {
+      // 这里应该从某个地方获取当前文件路径
+      // 暂时返回错误，需要在状态管理中维护当前文件路径
+      throw new Error('未提供文件路径');
+    }
+    
+    // 生成输出文件路径
+    const path = require('path');
+    const outputPath = path.join(
+      path.dirname(inputPath),
+      `${path.basename(inputPath, path.extname(inputPath))}_converted${path.extname(inputPath)}`
+    );
+    
+    // 将映射规则转换为数组格式
+    const mappings = Object.entries(mappingRules).map(([source, target], index) => ({
+      id: `mapping_${index}`,
+      sourceValue: source,
+      targetValue: target,
+      confidence: 1.0,
+      isManual: true
+    }));
+    
+    const success = await ExcelService.transformExcelFile(inputPath, outputPath, columnName, mappings);
+    
+    // 获取转换统计
+    const result = await ExcelService.readExcelFile(outputPath);
+    
+    return {
+      success: true,
+      totalRows: result.data.length,
+      transformedRows: mappings.length,
+      skippedRows: result.data.length - mappings.length,
+      filePath: outputPath
+    };
   } catch (error: any) {
     console.error('转换Excel文件失败:', error);
-    throw new Error(`转换Excel文件失败: ${error.message}`);
+    return {
+      success: false,
+      totalRows: 0,
+      transformedRows: 0,
+      skippedRows: 0,
+      error: error.message
+    };
   }
 });
 
@@ -300,6 +347,17 @@ ipcMain.handle('save-file-dialog', async (event, defaultPath?: string) => {
   } catch (error: any) {
     console.error('保存文件对话框失败:', error);
     return null;
+  }
+});
+
+// 打开文件位置处理器
+ipcMain.handle('open-file-location', async (event, filePath: string) => {
+  try {
+    const { shell } = require('electron');
+    shell.showItemInFolder(filePath);
+  } catch (error: any) {
+    console.error('打开文件位置失败:', error);
+    throw new Error(`打开文件位置失败: ${error.message}`);
   }
 });
 
