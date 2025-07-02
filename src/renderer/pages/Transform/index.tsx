@@ -33,6 +33,7 @@ export const TransformPage: React.FC = () => {
     excelData,
     selectedColumn,
     selectedFilePath,
+    selectedWorksheet,
     userEditedMappings,
     transformProgress,
     transformResult,
@@ -151,7 +152,8 @@ export const TransformPage: React.FC = () => {
       const result = await window.electronAPI.transformExcel({
         filePath: selectedFilePath!,
         columnName: selectedColumn,
-        mappingRules: mappingObject
+        mappingRules: mappingObject,
+        worksheetName: selectedWorksheet || undefined
       });
 
       if (result.success) {

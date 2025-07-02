@@ -97,13 +97,25 @@ class ExcelService {
     inputPath: string,
     outputPath: string,
     columnName: string,
-    mappingRules: MappingRule[]
+    mappingRules: MappingRule[],
+    worksheetName?: string
   ): Promise<TransformResult> {
     try {
       const workbook = new ExcelJS.Workbook();
       await workbook.xlsx.readFile(inputPath);
       
-      const worksheet = workbook.worksheets[0];
+      // 选择要转换的工作表
+      let worksheet;
+      if (worksheetName) {
+        worksheet = workbook.worksheets.find(sheet => sheet.name === worksheetName);
+        if (!worksheet) {
+          throw new Error(`找不到工作表: ${worksheetName}`);
+        }
+      } else {
+        // 默认使用第一个工作表
+        worksheet = workbook.worksheets[0];
+      }
+      
       if (!worksheet) {
         throw new Error('Excel文件中没有有效的工作表');
       }

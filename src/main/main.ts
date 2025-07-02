@@ -247,14 +247,19 @@ ipcMain.handle('transform-excel', async (event, params: {
   filePath: string;
   columnName: string;
   mappingRules: { [key: string]: string };
+  worksheetName?: string;
 }) => {
   try {
     console.log('开始转换Excel文件');
-    const { filePath, columnName, mappingRules } = params;
+    const { filePath, columnName, mappingRules, worksheetName } = params;
     
     // 检查文件路径
     if (!filePath) {
       throw new Error('未提供文件路径');
+    }
+    
+    if (worksheetName) {
+      console.log(`转换工作表: ${worksheetName}`);
     }
     
     // 生成输出文件路径
@@ -273,7 +278,7 @@ ipcMain.handle('transform-excel', async (event, params: {
       isManual: true
     }));
     
-    const result = await ExcelService.transformExcelFile(filePath, outputPath, columnName, mappings);
+    const result = await ExcelService.transformExcelFile(filePath, outputPath, columnName, mappings, worksheetName);
     
     if (!result.success) {
       throw new Error('转换失败');

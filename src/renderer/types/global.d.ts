@@ -29,6 +29,7 @@ export interface ElectronAPI {
     filePath: string;
     columnName: string;
     mappingRules: { [key: string]: string };
+    worksheetName?: string;
     onProgress?: (progress: number) => void;
   }) => Promise<{
     success: boolean;
