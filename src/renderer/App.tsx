@@ -119,6 +119,7 @@ const App: React.FC = () => {
   };
 
   const renderMainContent = () => {
+    console.log('App.tsx - 渲染主内容，当前步骤:', currentStep);
     switch (currentStep) {
       case 1:
         return (

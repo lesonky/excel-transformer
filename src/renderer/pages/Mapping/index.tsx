@@ -176,7 +176,16 @@ export const MappingPage: React.FC = () => {
 
   // 处理下一步
   const handleNextStep = () => {
+    console.log('Mapping页面 - handleNextStep被调用');
+    console.log('当前映射状态:', {
+      userEditedMappings: userEditedMappings.length,
+      uniqueValues: uniqueValues.length,
+      selectedColumn,
+      selectedFilePath: useAppStore.getState().selectedFilePath
+    });
+
     if (userEditedMappings.length === 0) {
+      console.log('映射规则为空，显示警告');
       message.warning('请先生成或添加映射规则');
       return;
     }
@@ -184,13 +193,19 @@ export const MappingPage: React.FC = () => {
     const mappedCount = userEditedMappings.length;
     const totalCount = uniqueValues.length;
     
+    console.log('准备进入下一步，映射统计:', { mappedCount, totalCount });
+    
     if (mappedCount < totalCount) {
       Modal.confirm({
         title: '映射不完整',
         content: `还有 ${totalCount - mappedCount} 个唯一值未设置映射规则，是否继续？`,
-        onOk: () => nextStep(),
+        onOk: () => {
+          console.log('用户确认继续，调用nextStep');
+          nextStep();
+        },
       });
     } else {
+      console.log('映射完整，直接调用nextStep');
       nextStep();
     }
   };

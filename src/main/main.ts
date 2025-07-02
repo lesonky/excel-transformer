@@ -249,22 +249,19 @@ ipcMain.handle('transform-excel', async (event, params: {
   mappingRules: { [key: string]: string };
 }) => {
   try {
-    console.log('转换Excel文件:', params);
+    console.log('开始转换Excel文件');
     const { filePath, columnName, mappingRules } = params;
     
-    // 如果没有提供文件路径，使用当前加载的文件
-    let inputPath = filePath;
-    if (!inputPath) {
-      // 这里应该从某个地方获取当前文件路径
-      // 暂时返回错误，需要在状态管理中维护当前文件路径
+    // 检查文件路径
+    if (!filePath) {
       throw new Error('未提供文件路径');
     }
     
     // 生成输出文件路径
     const path = require('path');
     const outputPath = path.join(
-      path.dirname(inputPath),
-      `${path.basename(inputPath, path.extname(inputPath))}_converted${path.extname(inputPath)}`
+      path.dirname(filePath),
+      `${path.basename(filePath, path.extname(filePath))}_converted${path.extname(filePath)}`
     );
     
     // 将映射规则转换为数组格式
@@ -276,20 +273,17 @@ ipcMain.handle('transform-excel', async (event, params: {
       isManual: true
     }));
     
-    const success = await ExcelService.transformExcelFile(inputPath, outputPath, columnName, mappings);
+    const result = await ExcelService.transformExcelFile(filePath, outputPath, columnName, mappings);
     
-    // 获取转换统计
-    const result = await ExcelService.readExcelFile(outputPath);
+    if (!result.success) {
+      throw new Error('转换失败');
+    }
     
-    return {
-      success: true,
-      totalRows: result.data.length,
-      transformedRows: mappings.length,
-      skippedRows: result.data.length - mappings.length,
-      filePath: outputPath
-    };
+    console.log(`转换完成: ${result.transformedRows}行已转换，${result.skippedRows}行跳过`);
+    return result;
+    
   } catch (error: any) {
-    console.error('转换Excel文件失败:', error);
+    console.error('转换Excel文件失败:', error.message);
     return {
       success: false,
       totalRows: 0,

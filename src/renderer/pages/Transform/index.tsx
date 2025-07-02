@@ -32,6 +32,7 @@ export const TransformPage: React.FC = () => {
   const {
     excelData,
     selectedColumn,
+    selectedFilePath,
     userEditedMappings,
     transformProgress,
     transformResult,
@@ -122,19 +123,16 @@ export const TransformPage: React.FC = () => {
       return;
     }
 
-    Modal.confirm({
-      title: '确认执行转换',
-      content: (
-        <div>
-          <p>即将转换文件中的 <Text strong>{selectedColumn}</Text> 字段</p>
-          <p>共 <Text strong>{transformStats?.totalRows}</Text> 行数据，其中 <Text strong>{transformStats?.mappedRows}</Text> 行将被转换</p>
-          <p style={{ color: '#ff4d4f' }}>此操作不可撤销，是否继续？</p>
-        </div>
-      ),
-      onOk: executeTransform,
-      okText: '确认转换',
-      cancelText: '取消'
-    });
+    if (!selectedFilePath) {
+      message.error('文件路径缺失，请重新选择文件');
+      return;
+    }
+
+    const confirmMessage = `即将转换文件中的"${selectedColumn}"字段，共${transformStats?.totalRows}行数据，其中${transformStats?.mappedRows}行将被转换。\n\n此操作不可撤销，是否继续？`;
+    
+    if (window.confirm(confirmMessage)) {
+      executeTransform();
+    }
   };
 
   const executeTransform = async () => {
@@ -151,7 +149,7 @@ export const TransformPage: React.FC = () => {
 
       // 调用主进程执行转换
       const result = await window.electronAPI.transformExcel({
-        filePath: '', // 使用已加载的文件
+        filePath: selectedFilePath!,
         columnName: selectedColumn,
         mappingRules: mappingObject
       });
@@ -200,14 +198,10 @@ export const TransformPage: React.FC = () => {
 
   // 开始新的转换
   const handleStartNew = () => {
-    Modal.confirm({
-      title: '开始新的转换',
-      content: '这将清除当前所有数据，是否继续？',
-      onOk: () => {
-        resetApp();
-        message.success('已重置应用状态');
-      }
-    });
+    if (window.confirm('开始新的转换\n\n这将清除当前所有数据，是否继续？')) {
+      resetApp();
+      message.success('已重置应用状态');
+    }
   };
 
   // 预览表格列定义
@@ -253,7 +247,8 @@ export const TransformPage: React.FC = () => {
     return (
       <Alert
         message="数据缺失"
-        description="请先完成前面的步骤：上传文件、选择字段并设置映射规则"
+        description={`请先完成前面的步骤：上传文件、选择字段并设置映射规则
+        状态: Excel数据=${!!excelData}, 选中列=${selectedColumn}, 映射规则=${userEditedMappings.length}条`}
         type="warning"
         showIcon
         style={{ margin: '20px' }}

@@ -110,15 +110,23 @@ export const useAppStore = create<AppState>((set, get) => ({
   // 复合操作
   nextStep: () => {
     const { currentStep } = get();
+    console.log('状态管理 - nextStep被调用，当前步骤:', currentStep);
     if (currentStep < 4) {
+      console.log('步骤更新:', currentStep, '->', currentStep + 1);
       set({ currentStep: currentStep + 1 });
+    } else {
+      console.log('已经是最后一步，无法继续');
     }
   },
   
   prevStep: () => {
     const { currentStep } = get();
+    console.log('状态管理 - prevStep被调用，当前步骤:', currentStep);
     if (currentStep > 1) {
+      console.log('步骤更新:', currentStep, '->', currentStep - 1);
       set({ currentStep: currentStep - 1 });
+    } else {
+      console.log('已经是第一步，无法返回');
     }
   },
   
