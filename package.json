@@ -12,26 +12,40 @@
     "build": "npm run build:vite && npm run build:electron",
     "build:vite": "vite build",
     "build:electron": "tsc -p tsconfig.main.json && tsc -p tsconfig.preload.json && node scripts/copy-assets.js",
+    "generate-icons": "node scripts/generate-icons.js && node scripts/generate-platform-icons.js",
     "pack": "npm run build && electron-builder",
     "dist": "npm run build && electron-builder --publish=never",
     "postinstall": "electron-builder install-app-deps"
   },
   "build": {
-    "appId": "com.example.excel-transformer",
+    "appId": "com.excel-transformer.app",
     "productName": "Excel字段转换工具",
     "directories": {
+      "buildResources": "src/assets",
       "output": "release"
     },
     "files": [
       "dist/**/*",
-      "src/assets/**/*",
-      "node_modules/**/*"
+      "!dist/assets/**/*",
+      "src/assets/icons/**/*",
+      "node_modules/**/*",
+      "!node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
+      "!node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
+      "!node_modules/*.d.ts",
+      "!node_modules/.bin",
+      "!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}",
+      "!.editorconfig",
+      "!**/._*",
+      "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}",
+      "!**/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}",
+      "!**/{appveyor.yml,.travis.yml,circle.yml}",
+      "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}"
     ],
-    "icon": "src/assets/icons/icon",
+    "compression": "maximum",
     "mac": {
       "category": "public.app-category.productivity",
       "target": "dmg",
-      "icon": "src/assets/icons/icon-512.png"
+      "icon": "src/assets/icons/icon.icns"
     },
     "win": {
       "target": "nsis",
@@ -40,6 +54,14 @@
     "linux": {
       "target": "AppImage",
       "icon": "src/assets/icons/icon-256.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "dmg": {
+      "title": "Excel字段转换工具",
+      "icon": "src/assets/icons/icon.icns"
     }
   },
   "keywords": [
@@ -54,7 +76,6 @@
     "@google/generative-ai": "^0.24.1",
     "antd": "^5.26.3",
     "better-sqlite3": "^12.2.0",
-    "electron": "^37.1.0",
     "exceljs": "^4.4.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
@@ -67,11 +88,13 @@
     "@vitejs/plugin-react": "^4.6.0",
     "concurrently": "^9.2.0",
     "cross-env": "^7.0.3",
+    "electron": "^37.1.0",
     "electron-builder": "^26.0.12",
     "electron-devtools-installer": "^4.0.0",
+    "png2icons": "^2.0.1",
+    "sharp": "^0.34.2",
     "typescript": "^5.8.3",
     "vite": "^7.0.0",
     "wait-on": "^8.0.3"
   }
 }
- 
