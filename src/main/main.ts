@@ -1,10 +1,34 @@
 import { app, BrowserWindow, ipcMain, dialog, shell } from 'electron';
 import path from 'path';
+import fs from 'fs';
 import { ConfigService } from './services/ConfigService';
 import { AIService } from './services/AIService';
 import ExcelService from './services/ExcelService';
 
 let mainWindow: BrowserWindow;
+
+// 获取图标路径的辅助函数
+const getIconPath = (): string => {
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  
+  if (isDevelopment) {
+    // 开发模式：从源文件夹读取
+    const devIconPath = path.join(__dirname, '../../src/assets/icons/icon-256.png');
+    if (fs.existsSync(devIconPath)) {
+      return devIconPath;
+    }
+  }
+  
+  // 生产模式：从dist文件夹读取  
+  const prodIconPath = path.join(__dirname, '../assets/icons/icon-256.png');
+  if (fs.existsSync(prodIconPath)) {
+    return prodIconPath;
+  }
+  
+  // 备用路径
+  const fallbackPath = path.join(__dirname, '../../src/assets/icons/icon-256.png');
+  return fallbackPath;
+};
 
 const createWindow = (): void => {
   mainWindow = new BrowserWindow({
@@ -18,7 +42,7 @@ const createWindow = (): void => {
       preload: path.join(__dirname, 'preload.js'),
     },
     title: 'Excel字段转换工具',
-    icon: path.join(__dirname, '../assets/icons/icon-256.png'),
+    icon: getIconPath(),
   });
 
   const isDevelopment = process.env.NODE_ENV === 'development';
