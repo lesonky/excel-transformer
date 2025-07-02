@@ -11,10 +11,28 @@ let mainWindow: BrowserWindow;
 const getIconPath = (): string => {
   const isDevelopment = process.env.NODE_ENV === 'development';
   
+  // macOS优先使用ICNS格式
+  if (process.platform === 'darwin') {
+    if (isDevelopment) {
+      const devIconPath = path.join(__dirname, '../../src/assets/icons/icon.icns');
+      if (fs.existsSync(devIconPath)) {
+        console.log('使用开发模式ICNS图标:', devIconPath);
+        return devIconPath;
+      }
+    }
+    
+    const prodIconPath = path.join(__dirname, '../assets/icons/icon.icns');
+    if (fs.existsSync(prodIconPath)) {
+      console.log('使用生产模式ICNS图标:', prodIconPath);
+      return prodIconPath;
+    }
+  }
+  
   if (isDevelopment) {
     // 开发模式：从源文件夹读取
     const devIconPath = path.join(__dirname, '../../src/assets/icons/icon-256.png');
     if (fs.existsSync(devIconPath)) {
+      console.log('使用开发模式PNG图标:', devIconPath);
       return devIconPath;
     }
   }
@@ -22,11 +40,13 @@ const getIconPath = (): string => {
   // 生产模式：从dist文件夹读取  
   const prodIconPath = path.join(__dirname, '../assets/icons/icon-256.png');
   if (fs.existsSync(prodIconPath)) {
+    console.log('使用生产模式PNG图标:', prodIconPath);
     return prodIconPath;
   }
   
   // 备用路径
   const fallbackPath = path.join(__dirname, '../../src/assets/icons/icon-256.png');
+  console.log('使用备用图标路径:', fallbackPath);
   return fallbackPath;
 };
 
@@ -57,6 +77,17 @@ const createWindow = (): void => {
   mainWindow.on('closed', () => {
     mainWindow = null as any;
   });
+
+  // 设置Dock图标（macOS专用）
+  if (process.platform === 'darwin' && app.dock) {
+    const iconPath = getIconPath();
+    try {
+      app.dock.setIcon(iconPath);
+      console.log('Dock图标设置成功:', iconPath);
+    } catch (error) {
+      console.error('设置Dock图标失败:', error);
+    }
+  }
 };
 
 app.whenReady().then(() => {
