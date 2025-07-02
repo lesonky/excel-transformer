@@ -1,96 +1,232 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
-import * as path from 'path';
+import { app, BrowserWindow, ipcMain, dialog } from 'electron';
+import path from 'path';
 import { ConfigService } from './services/ConfigService';
 import { AIService } from './services/AIService';
+import ExcelService from './services/ExcelService';
 
-class Application {
-  private mainWindow: BrowserWindow | null = null;
-  private configService: ConfigService;
-  private aiService: AIService;
+let mainWindow: BrowserWindow;
 
-  constructor() {
-    this.configService = new ConfigService();
-    this.aiService = new AIService(this.configService);
-    this.setupIpcHandlers();
+const createWindow = (): void => {
+  mainWindow = new BrowserWindow({
+    width: 1200,
+    height: 800,
+    minWidth: 1000,
+    minHeight: 600,
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: path.join(__dirname, 'preload.js'),
+    },
+    title: 'Excel字段转换工具',
+    icon: path.join(__dirname, '../assets/icon.png'), // 可选：添加应用图标
+  });
+
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  
+  if (isDevelopment) {
+    mainWindow.loadURL('http://localhost:5173');
+    mainWindow.webContents.openDevTools();
+  } else {
+    mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
   }
 
-  async initialize() {
-    await app.whenReady();
-    await this.createWindow();
-    await this.checkInitialSetup();
-  }
+  mainWindow.on('closed', () => {
+    mainWindow = null as any;
+  });
+};
 
-  private async createWindow() {
-    this.mainWindow = new BrowserWindow({
-      width: 1200,
-      height: 800,
-      webPreferences: {
-        nodeIntegration: false,
-        contextIsolation: true,
-        preload: path.join(__dirname, 'preload.js')
-      },
-      titleBarStyle: 'default',
-      show: false
+app.whenReady().then(() => {
+  createWindow();
+
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  });
+});
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') app.quit();
+});
+
+// 初始化服务实例
+const configService = new ConfigService();
+const aiService = new AIService(configService);
+
+// IPC处理器 - API KEY相关
+ipcMain.handle('check-api-key-configured', async (): Promise<boolean> => {
+  try {
+    return await configService.isApiKeyConfigured();
+  } catch (error) {
+    console.error('检查API KEY配置失败:', error);
+    return false;
+  }
+});
+
+ipcMain.handle('test-api-key', async (_, apiKey: string): Promise<boolean> => {
+  try {
+    return await aiService.testApiKey(apiKey);
+  } catch (error) {
+    console.error('测试API KEY失败:', error);
+    return false;
+  }
+});
+
+ipcMain.handle('save-api-key', async (_, apiKey: string): Promise<void> => {
+  try {
+    await configService.setApiKey(apiKey);
+    await aiService.initialize();
+    
+    // 通知前端API KEY状态变化
+    if (mainWindow) {
+      mainWindow.webContents.send('api-key-status-changed', true);
+    }
+  } catch (error) {
+    console.error('保存API KEY失败:', error);
+    throw error;
+  }
+});
+
+ipcMain.handle('get-api-key', async (): Promise<string | null> => {
+  try {
+    return await configService.getApiKey();
+  } catch (error) {
+    console.error('获取API KEY失败:', error);
+    return null;
+  }
+});
+
+// IPC处理器 - 文件相关
+ipcMain.handle('select-excel-file', async (): Promise<string | null> => {
+  try {
+    const result = await dialog.showOpenDialog(mainWindow, {
+      title: '选择Excel文件',
+      filters: [
+        { name: 'Excel文件', extensions: ['xlsx', 'xls'] },
+        { name: '所有文件', extensions: ['*'] }
+      ],
+      properties: ['openFile']
     });
 
-    const isDev = process.env.NODE_ENV === 'development';
+    if (result.canceled || result.filePaths.length === 0) {
+      return null;
+    }
+
+    return result.filePaths[0];
+  } catch (error) {
+    console.error('选择文件失败:', error);
+    throw error;
+  }
+});
+
+ipcMain.handle('read-excel-file', async (_, filePath: string) => {
+  try {
+    return await ExcelService.readExcelFile(filePath);
+  } catch (error) {
+    console.error('读取Excel文件失败:', error);
+    throw error;
+  }
+});
+
+ipcMain.handle('validate-excel-file', async (_, filePath: string): Promise<boolean> => {
+  try {
+    return await ExcelService.validateExcelFile(filePath);
+  } catch (error) {
+    console.error('验证Excel文件失败:', error);
+    return false;
+  }
+});
+
+// IPC处理器 - AI映射相关
+ipcMain.handle('generate-ai-mapping', async (_, params: {
+  uniqueValues: string[];
+  description: string;
+  sampleData?: any[];
+}) => {
+  try {
+    const { uniqueValues, description } = params;
+    const mappingRequest = {
+      originalValues: uniqueValues,
+      targetDescription: description
+    };
+    return await aiService.generateMapping(mappingRequest);
+  } catch (error) {
+    console.error('生成AI映射失败:', error);
+    throw error;
+  }
+});
+
+// IPC处理器 - 转换相关
+ipcMain.handle('transform-excel-file', async (_, params: {
+  inputPath: string;
+  outputPath: string;
+  columnName: string;
+  mappingRules: any[];
+}) => {
+  try {
+    const { inputPath, outputPath, columnName, mappingRules } = params;
+    return await ExcelService.transformExcelFile(inputPath, outputPath, columnName, mappingRules);
+  } catch (error) {
+    console.error('转换Excel文件失败:', error);
+    throw error;
+  }
+});
+
+ipcMain.handle('save-excel-file', async (): Promise<string | null> => {
+  try {
+    const result = await dialog.showSaveDialog(mainWindow, {
+      title: '保存转换后的文件',
+      defaultPath: '转换后的文件.xlsx',
+      filters: [
+        { name: 'Excel文件', extensions: ['xlsx'] },
+        { name: '所有文件', extensions: ['*'] }
+      ]
+    });
+
+    if (result.canceled || !result.filePath) {
+      return null;
+    }
+
+    return result.filePath;
+  } catch (error) {
+    console.error('保存文件失败:', error);
+    throw error;
+  }
+});
+
+// IPC处理器 - 通用工具
+ipcMain.handle('show-item-in-folder', async (_, filePath: string): Promise<void> => {
+  try {
+    const { shell } = require('electron');
+    await shell.showItemInFolder(filePath);
+  } catch (error) {
+    console.error('显示文件位置失败:', error);
+    throw error;
+  }
+});
+
+// 应用启动时初始化服务
+app.whenReady().then(async () => {
+  try {
+    console.log('正在初始化服务...');
     
-    if (isDev) {
-      this.mainWindow.loadURL('http://localhost:3000');
-      this.mainWindow.webContents.openDevTools();
+    // 检查是否有API KEY，如果有则初始化AI服务
+    if (await configService.isApiKeyConfigured()) {
+      await aiService.initialize();
+      console.log('AI服务初始化完成');
     } else {
-      this.mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
-    }
-
-    this.mainWindow.once('ready-to-show', () => {
-      this.mainWindow?.show();
-    });
-
-    this.mainWindow.on('closed', () => {
-      this.mainWindow = null;
-    });
-  }
-
-  private async checkInitialSetup() {
-    const isConfigured = await this.configService.isApiKeyConfigured();
-    if (isConfigured) {
-      await this.aiService.initialize();
+      console.log('未配置API KEY，跳过AI服务初始化');
     }
     
-    // 通知渲染进程API KEY配置状态
-    this.mainWindow?.webContents.send('api-key-status', isConfigured);
+    console.log('服务初始化完成');
+  } catch (error) {
+    console.error('服务初始化失败:', error);
   }
+});
 
-  private setupIpcHandlers() {
-    // API KEY相关处理器
-    ipcMain.handle('check-api-key-configured', async () => {
-      return await this.configService.isApiKeyConfigured();
-    });
+// 错误处理
+process.on('uncaughtException', (error) => {
+  console.error('未捕获的异常:', error);
+});
 
-    ipcMain.handle('test-api-key', async (_, apiKey: string) => {
-      return await this.aiService.testApiKey(apiKey);
-    });
-
-    ipcMain.handle('save-api-key', async (_, apiKey: string) => {
-      await this.configService.setApiKey(apiKey);
-      const initialized = await this.aiService.initialize();
-      return initialized;
-    });
-
-    // 应用相关事件
-    app.on('window-all-closed', () => {
-      if (process.platform !== 'darwin') {
-        app.quit();
-      }
-    });
-
-    app.on('activate', async () => {
-      if (BrowserWindow.getAllWindows().length === 0) {
-        await this.createWindow();
-      }
-    });
-  }
-}
-
-const application = new Application();
-application.initialize().catch(console.error); 
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('未处理的Promise拒绝:', reason, 'at:', promise);
+}); 
