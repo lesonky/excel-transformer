@@ -51,7 +51,7 @@ export class AIService {
   async testApiKey(apiKey: string): Promise<boolean> {
     try {
       const testAI = new GoogleGenerativeAI(apiKey);
-      const model = testAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      const model = testAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
       
       // 发送一个简单的测试请求
       const result = await model.generateContent('Hello, please respond with "API key is valid"');
