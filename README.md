@@ -1,6 +1,6 @@
 # Excel字段转换工具
 
-> 🤖 **Vibe Coding Project** | 本项目属于 vibe coding 实验项目，所有代码工作均由 AI (Claude-3.5-Sonnet) 完成，展示了 AI 在软件开发中的能力。
+> 🤖 **Vibe Coding Project** | 本项目属于 vibe coding 实验项目，所有代码工作均由 AI (Claude-4-Sonnet) 完成，展示了 AI 在软件开发中的能力。
 
 一款跨平台（Mac/Windows）的桌面应用程序，专门用于智能转换Excel文件中的字段值。通过集成Gemini大模型能力，为用户提供智能化的字段值映射和转换服务。
 
@@ -149,10 +149,10 @@ excel-transformer/
 - [x] API KEY配置管理系统
 - [x] 高质量图标系统
 - [x] 应用打包和分发
-- [ ] Excel文件处理功能
-- [ ] GUI界面开发
-- [ ] AI映射生成功能
-- [ ] 数据转换引擎
+- [x] Excel文件处理功能
+- [x] GUI界面开发
+- [x] AI映射生成功能
+- [x] 数据转换引擎
 
 ## 贡献
 
@@ -174,4 +174,4 @@ MIT License
 
 ---
 
-*本项目展示了AI在软件开发中的潜力，所有代码均由Claude-3.5-Sonnet生成。* 
+*本项目展示了AI在软件开发中的潜力，所有代码均由Claude-4-Sonnet生成。* 
