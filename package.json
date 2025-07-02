@@ -5,7 +5,8 @@
   "main": "dist/main/main.js",
   "homepage": "./",
   "scripts": {
-    "dev": "concurrently \"npm run dev:vite\" \"wait-on http-get://localhost:3000 http-get://localhost:3001 http-get://localhost:3002 http-get://localhost:3003 http-get://localhost:5173 http-get://localhost:5174 -t 30000 -l && npm run dev:electron\"",
+    "dev": "concurrently \"npm run dev:vite\" \"npm run wait-and-start-electron\"",
+    "wait-and-start-electron": "node scripts/wait-for-dev-server.js && npm run dev:electron",
     "dev:vite": "vite",
     "dev:electron": "cross-env NODE_ENV=development electron .",
     "build": "npm run build:vite && npm run build:electron",

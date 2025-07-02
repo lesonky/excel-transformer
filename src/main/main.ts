@@ -1,34 +1,11 @@
 import { app, BrowserWindow, ipcMain, dialog, shell } from 'electron';
 import path from 'path';
 import fs from 'fs';
-import net from 'net';
 import { ConfigService } from './services/ConfigService';
 import { AIService } from './services/AIService';
 import ExcelService from './services/ExcelService';
 
 let mainWindow: BrowserWindow;
-
-// 检测可用端口的函数
-const findAvailablePort = async (): Promise<string> => {
-  // 检测常用的开发端口
-  const portsToTry = [3000, 3001, 3002, 3003, 5173, 5174];
-  
-  for (const port of portsToTry) {
-    try {
-      // 检查这个端口是否有HTTP服务
-      const response = await fetch(`http://localhost:${port}`);
-      if (response.ok || response.status === 404) {
-        console.log(`发现开发服务器在端口 ${port}`);
-        return port.toString();
-      }
-    } catch (e) {
-      // 端口没有HTTP服务或无法连接，继续检查下一个
-    }
-  }
-  
-  // 默认返回3000
-  return '3000';
-};
 
 // 获取图标路径的辅助函数
 const getIconPath = (): string => {
@@ -91,8 +68,8 @@ const createWindow = async (): Promise<void> => {
   const isDevelopment = process.env.NODE_ENV === 'development';
   
   if (isDevelopment) {
-    // 动态检测开发服务器端口
-    const devServerPort = process.env.VITE_DEV_SERVER_PORT || await findAvailablePort();
+    // 从环境变量获取开发服务器端口，如果没有则使用默认值
+    const devServerPort = process.env.VITE_DEV_SERVER_PORT || '3000';
     const devServerUrl = `http://localhost:${devServerPort}`;
     console.log('连接到开发服务器:', devServerUrl);
     
