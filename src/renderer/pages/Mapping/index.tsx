@@ -417,7 +417,14 @@ export const MappingPage: React.FC = () => {
             columns={columns}
             dataSource={userEditedMappings}
             rowKey="id"
-            pagination={{ pageSize: 10 }}
+            pagination={{
+              pageSize: 10,
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条，共 ${total} 条`,
+              pageSizeOptions: ['10', '20', '50', '100'],
+              size: 'default'
+            }}
             size="small"
           />
           
