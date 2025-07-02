@@ -18,7 +18,7 @@ const createWindow = (): void => {
       preload: path.join(__dirname, 'preload.js'),
     },
     title: 'Excel字段转换工具',
-    icon: path.join(__dirname, '../assets/icon.png'), // 可选：添加应用图标
+    icon: path.join(__dirname, '../assets/icons/icon-256.png'),
   });
 
   const isDevelopment = process.env.NODE_ENV === 'development';

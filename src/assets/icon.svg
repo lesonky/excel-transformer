@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景渐变 -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4CAF50;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2E7D32;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="tableGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.95" />
+      <stop offset="100%" style="stop-color:#f5f5f5;stop-opacity:0.95" />
+    </linearGradient>
+    <linearGradient id="arrowGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#FF6B35;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#F7931E;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- 圆角背景 -->
+  <rect x="0" y="0" width="256" height="256" rx="48" ry="48" fill="url(#bgGradient)"/>
+  
+  <!-- 左侧表格 -->
+  <g transform="translate(32, 64)">
+    <!-- 表格背景 -->
+    <rect x="0" y="0" width="80" height="128" rx="8" ry="8" fill="url(#tableGradient)" stroke="#e0e0e0" stroke-width="2"/>
+    
+    <!-- 表格网格线 -->
+    <line x1="0" y1="32" x2="80" y2="32" stroke="#e0e0e0" stroke-width="1"/>
+    <line x1="0" y1="64" x2="80" y2="64" stroke="#e0e0e0" stroke-width="1"/>
+    <line x1="0" y1="96" x2="80" y2="96" stroke="#e0e0e0" stroke-width="1"/>
+    
+    <line x1="26" y1="0" x2="26" y2="128" stroke="#e0e0e0" stroke-width="1"/>
+    <line x1="54" y1="0" x2="54" y2="128" stroke="#e0e0e0" stroke-width="1"/>
+    
+    <!-- 表格数据模拟 -->
+    <circle cx="13" cy="16" r="3" fill="#4CAF50"/>
+    <circle cx="40" cy="16" r="3" fill="#2196F3"/>
+    <circle cx="67" cy="16" r="3" fill="#FF9800"/>
+    
+    <rect x="6" y="40" width="14" height="4" rx="2" fill="#bdbdbd"/>
+    <rect x="6" y="48" width="18" height="4" rx="2" fill="#bdbdbd"/>
+    
+    <rect x="34" y="40" width="12" height="4" rx="2" fill="#bdbdbd"/>
+    <rect x="34" y="48" width="16" height="4" rx="2" fill="#bdbdbd"/>
+    
+    <rect x="60" y="40" width="15" height="4" rx="2" fill="#bdbdbd"/>
+    <rect x="60" y="48" width="13" height="4" rx="2" fill="#bdbdbd"/>
+  </g>
+  
+  <!-- 转换箭头 -->
+  <g transform="translate(128, 112)">
+    <path d="M -16 0 L 0 -12 L 0 -6 L 16 -6 L 16 6 L 0 6 L 0 12 Z" fill="url(#arrowGradient)" stroke="#fff" stroke-width="2"/>
+    <!-- AI智能指示器 -->
+    <circle cx="0" cy="-20" r="8" fill="#9C27B0" stroke="#fff" stroke-width="2"/>
+    <text x="0" y="-16" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="8" font-weight="bold">AI</text>
+  </g>
+  
+  <!-- 右侧表格 -->
+  <g transform="translate(144, 64)">
+    <!-- 表格背景 -->
+    <rect x="0" y="0" width="80" height="128" rx="8" ry="8" fill="url(#tableGradient)" stroke="#e0e0e0" stroke-width="2"/>
+    
+    <!-- 表格网格线 -->
+    <line x1="0" y1="32" x2="80" y2="32" stroke="#e0e0e0" stroke-width="1"/>
+    <line x1="0" y1="64" x2="80" y2="64" stroke="#e0e0e0" stroke-width="1"/>
+    <line x1="0" y1="96" x2="80" y2="96" stroke="#e0e0e0" stroke-width="1"/>
+    
+    <line x1="26" y1="0" x2="26" y2="128" stroke="#e0e0e0" stroke-width="1"/>
+    <line x1="54" y1="0" x2="54" y2="128" stroke="#e0e0e0" stroke-width="1"/>
+    
+    <!-- 转换后的数据（不同颜色表示已转换） -->
+    <circle cx="13" cy="16" r="3" fill="#4CAF50"/>
+    <circle cx="40" cy="16" r="3" fill="#2196F3"/>
+    <circle cx="67" cy="16" r="3" fill="#FF9800"/>
+    
+    <rect x="6" y="40" width="14" height="4" rx="2" fill="#4CAF50"/>
+    <rect x="6" y="48" width="18" height="4" rx="2" fill="#4CAF50"/>
+    
+    <rect x="34" y="40" width="12" height="4" rx="2" fill="#4CAF50"/>
+    <rect x="34" y="48" width="16" height="4" rx="2" fill="#4CAF50"/>
+    
+    <rect x="60" y="40" width="15" height="4" rx="2" fill="#4CAF50"/>
+    <rect x="60" y="48" width="13" height="4" rx="2" fill="#4CAF50"/>
+  </g>
+  
+  <!-- Excel标识 -->
+  <g transform="translate(20, 20)">
+    <rect x="0" y="0" width="24" height="24" rx="4" fill="#217346"/>
+    <text x="12" y="16" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="12" font-weight="bold">X</text>
+  </g>
+  
+  <!-- 底部标题区域 -->
+  <g transform="translate(128, 220)">
+    <text x="0" y="0" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="14" font-weight="600">Excel Transformer</text>
+  </g>
+</svg> 

@@ -25,12 +25,19 @@
       "dist/**/*",
       "node_modules/**/*"
     ],
+    "icon": "src/assets/icons/icon",
     "mac": {
       "category": "public.app-category.productivity",
-      "target": "dmg"
+      "target": "dmg",
+      "icon": "src/assets/icons/icon-512.png"
     },
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "src/assets/icons/icon.ico"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "src/assets/icons/icon-256.png"
     }
   },
   "keywords": [
