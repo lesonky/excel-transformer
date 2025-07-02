@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ConfigProvider, Layout, Button, Space, Typography, Alert, message, Card } from 'antd';
 import { SettingOutlined, CheckCircleOutlined, ExclamationCircleOutlined, ArrowRightOutlined } from '@ant-design/icons';
 import zhCN from 'antd/locale/zh_CN';
@@ -6,6 +6,7 @@ import { useAppStore } from './stores/appStore';
 import ApiKeySettings from './components/ApiKeySettings/index';
 import StepNavigation from './components/StepNavigation/index';
 import FileUpload from './components/FileUpload/index';
+import { FieldSelectPage } from './pages/FieldSelect';
 import './App.css';
 
 const { Header, Content } = Layout;
@@ -29,6 +30,8 @@ const App: React.FC = () => {
     nextStep,
     prevStep
   } = useAppStore();
+
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     initializeApp();
@@ -62,6 +65,8 @@ const App: React.FC = () => {
       console.error('应用初始化失败:', error);
       setError('应用程序初始化失败: ' + (error as Error).message);
       message.error('应用程序初始化失败');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -177,22 +182,7 @@ const App: React.FC = () => {
         );
       
       case 2:
-        return (
-          <div className="flex-center full-height">
-            <div style={{ textAlign: 'center' }}>
-              <Title level={3}>步骤2: 选择字段</Title>
-              <p>选择需要转换的Excel字段</p>
-              <p style={{ color: '#666' }}>此功能正在开发中...</p>
-              
-              <div style={{ marginTop: '24px' }}>
-                <Space>
-                  <Button onClick={prevStep}>上一步</Button>
-                  <Button type="primary" onClick={nextStep}>下一步</Button>
-                </Space>
-              </div>
-            </div>
-          </div>
-        );
+        return <FieldSelectPage />;
       
       case 3:
         return (
@@ -256,6 +246,10 @@ const App: React.FC = () => {
         </Layout>
       </ConfigProvider>
     );
+  }
+
+  if (isLoading) {
+    return <div>加载中...</div>;
   }
 
   return (

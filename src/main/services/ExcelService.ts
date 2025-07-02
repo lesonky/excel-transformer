@@ -29,15 +29,25 @@ class ExcelService {
   /**
    * 读取Excel文件并解析数据
    */
-  async readExcelFile(filePath: string): Promise<ExcelData> {
+  async readExcelFile(filePath: string, worksheetName?: string): Promise<ExcelData> {
     try {
       const workbook = new ExcelJS.Workbook();
       await workbook.xlsx.readFile(filePath);
       
       const worksheets = workbook.worksheets.map(sheet => sheet.name);
       
-      // 默认读取第一个工作表
-      const worksheet = workbook.worksheets[0];
+      // 选择要读取的工作表
+      let worksheet;
+      if (worksheetName) {
+        worksheet = workbook.worksheets.find(sheet => sheet.name === worksheetName);
+        if (!worksheet) {
+          throw new Error(`找不到工作表: ${worksheetName}`);
+        }
+      } else {
+        // 默认读取第一个工作表
+        worksheet = workbook.worksheets[0];
+      }
+      
       if (!worksheet) {
         throw new Error('Excel文件中没有有效的工作表');
       }

@@ -21,28 +21,37 @@ export interface TransformResult {
   filePath?: string;
 }
 
-// 暴露给渲染进程的API
-const electronAPI = {
+// 暴露安全的API给渲染进程
+contextBridge.exposeInMainWorld('electronAPI', {
   // API KEY相关
-  checkApiKeyConfigured: (): Promise<boolean> => 
-    ipcRenderer.invoke('check-api-key-configured'),
+  checkApiKeyConfigured: () => ipcRenderer.invoke('check-api-key-configured'),
+  testApiKey: (apiKey: string) => ipcRenderer.invoke('test-api-key', apiKey),
+  saveApiKey: (apiKey: string) => ipcRenderer.invoke('save-api-key', apiKey),
   
-  testApiKey: (apiKey: string): Promise<boolean> => 
-    ipcRenderer.invoke('test-api-key', apiKey),
+  // Excel处理相关
+  parseExcel: (filePath: string, worksheetName?: string) => ipcRenderer.invoke('parse-excel', filePath, worksheetName),
+  transformExcel: (filePath: string, mappings: any[], targetColumn: string) => 
+    ipcRenderer.invoke('transform-excel', filePath, mappings, targetColumn),
   
-  saveApiKey: (apiKey: string): Promise<void> => 
-    ipcRenderer.invoke('save-api-key', apiKey),
+  // AI服务相关
+  generateMappings: (sourceValues: string[], description: string) => 
+    ipcRenderer.invoke('generate-mappings', sourceValues, description),
   
-  getApiKey: (): Promise<string | null> => 
-    ipcRenderer.invoke('get-api-key'),
+  // 文件操作相关
+  selectFile: () => ipcRenderer.invoke('select-file'),
+  openFileDialog: (filters?: any[]) => ipcRenderer.invoke('open-file-dialog', filters),
+  saveFileDialog: (defaultPath?: string) => ipcRenderer.invoke('save-file-dialog', defaultPath),
   
-  // API KEY状态变化监听
+  // 系统相关
+  getAppVersion: () => ipcRenderer.invoke('get-app-version'),
+  openExternal: (url: string) => ipcRenderer.invoke('open-external', url),
+  
+  // 监听器
   onApiKeyStatusChange: (callback: (isConfigured: boolean) => void) => {
     ipcRenderer.on('api-key-status-changed', (_, isConfigured) => callback(isConfigured));
   },
-  
-  removeApiKeyStatusListener: () => {
-    ipcRenderer.removeAllListeners('api-key-status-changed');
+  removeAllListeners: (channel: string) => {
+    ipcRenderer.removeAllListeners(channel);
   },
   
   // 文件操作相关
@@ -92,24 +101,12 @@ const electronAPI = {
     console.log('[Renderer]', ...args);
   },
   
-  // 应用信息
-  getAppVersion: (): Promise<string> => 
-    ipcRenderer.invoke('get-app-version'),
-    
   // 获取平台信息
   getPlatform: (): string => process.platform,
   
   // 检查网络连接
   checkNetworkConnection: (): Promise<boolean> => 
     ipcRenderer.invoke('check-network-connection')
-};
+});
 
-// 将API暴露给渲染进程
-contextBridge.exposeInMainWorld('electronAPI', electronAPI);
-
-// 类型声明
-declare global {
-  interface Window {
-    electronAPI: typeof electronAPI;
-  }
-} 
+// 类型声明已在 global.d.ts 中定义 

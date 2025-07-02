@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, shell } from 'electron';
 import path from 'path';
 import { ConfigService } from './services/ConfigService';
 import { AIService } from './services/AIService';
@@ -229,4 +229,90 @@ process.on('uncaughtException', (error) => {
 
 process.on('unhandledRejection', (reason, promise) => {
   console.error('未处理的Promise拒绝:', reason, 'at:', promise);
+});
+
+// Excel文件解析处理器
+ipcMain.handle('parse-excel', async (event, filePath: string, worksheetName?: string) => {
+  try {
+    console.log('解析Excel文件:', filePath, worksheetName ? `工作表: ${worksheetName}` : '');
+    return await ExcelService.readExcelFile(filePath, worksheetName);
+  } catch (error: any) {
+    console.error('解析Excel文件失败:', error);
+    throw new Error(`解析Excel文件失败: ${error.message}`);
+  }
+});
+
+// Excel文件转换处理器
+ipcMain.handle('transform-excel', async (event, inputPath: string, outputPath: string, mappings: any[], targetColumn: string) => {
+  try {
+    console.log('转换Excel文件:', inputPath, '到', outputPath);
+    return await ExcelService.transformExcelFile(inputPath, outputPath, targetColumn, mappings);
+  } catch (error: any) {
+    console.error('转换Excel文件失败:', error);
+    throw new Error(`转换Excel文件失败: ${error.message}`);
+  }
+});
+
+// AI映射生成处理器
+ipcMain.handle('generate-mappings', async (event, sourceValues: string[], description: string) => {
+  try {
+    console.log('生成AI映射:', { sourceValues: sourceValues.length, description });
+    const mappingRequest = {
+      originalValues: sourceValues,
+      targetDescription: description
+    };
+    return await aiService.generateMapping(mappingRequest);
+  } catch (error: any) {
+    console.error('生成AI映射失败:', error);
+    throw new Error(`生成AI映射失败: ${error.message}`);
+  }
+});
+
+// 文件操作处理器
+ipcMain.handle('select-file', async () => {
+  try {
+    const result = await dialog.showOpenDialog(mainWindow, {
+      properties: ['openFile'],
+      filters: [
+        { name: 'Excel files', extensions: ['xlsx', 'xls'] },
+        { name: 'All files', extensions: ['*'] }
+      ]
+    });
+    
+    return result.canceled ? null : result.filePaths[0];
+  } catch (error: any) {
+    console.error('选择文件失败:', error);
+    return null;
+  }
+});
+
+ipcMain.handle('save-file-dialog', async (event, defaultPath?: string) => {
+  try {
+    const result = await dialog.showSaveDialog(mainWindow, {
+      defaultPath,
+      filters: [
+        { name: 'Excel files', extensions: ['xlsx'] },
+        { name: 'All files', extensions: ['*'] }
+      ]
+    });
+    
+    return result.canceled ? null : result.filePath;
+  } catch (error: any) {
+    console.error('保存文件对话框失败:', error);
+    return null;
+  }
+});
+
+// 系统信息处理器
+ipcMain.handle('get-app-version', async () => {
+  return app.getVersion();
+});
+
+ipcMain.handle('open-external', async (event, url: string) => {
+  try {
+    await shell.openExternal(url);
+  } catch (error: any) {
+    console.error('打开外部链接失败:', error);
+    throw new Error(`打开外部链接失败: ${error.message}`);
+  }
 }); 

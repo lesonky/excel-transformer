@@ -1,74 +1,48 @@
-import React, { useState } from 'react';
-import { Upload, message, Card, Typography, Space, Button } from 'antd';
-import { InboxOutlined, FileExcelOutlined, DeleteOutlined } from '@ant-design/icons';
-import type { UploadProps } from 'antd';
+import React, { useCallback } from 'react';
+import { Card, Button, Typography, Space, Alert, Tag } from 'antd';
+import { InboxOutlined, FileExcelOutlined, DeleteOutlined, FolderOpenOutlined } from '@ant-design/icons';
 
-const { Dragger } = Upload;
 const { Title, Text } = Typography;
 
 interface FileUploadProps {
-  onFileSelected: (file: File, path: string) => void;
+  onFileSelected?: (file: File, path: string) => void;
   selectedFile?: File | null;
   onRemoveFile?: () => void;
 }
 
-const FileUpload: React.FC<FileUploadProps> = ({ 
-  onFileSelected, 
-  selectedFile, 
-  onRemoveFile 
+const FileUpload: React.FC<FileUploadProps> = ({
+  onFileSelected,
+  selectedFile,
+  onRemoveFile
 }) => {
-  const [uploading, setUploading] = useState(false);
-
-  const uploadProps: UploadProps = {
-    name: 'file',
-    multiple: false,
-    accept: '.xlsx,.xls',
-    showUploadList: false,
-    beforeUpload: (file) => {
-      const isExcel = file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || 
-                     file.type === 'application/vnd.ms-excel' ||
-                     file.name.toLowerCase().endsWith('.xlsx') ||
-                     file.name.toLowerCase().endsWith('.xls');
-      
-      if (!isExcel) {
-        message.error('只能上传Excel文件 (.xlsx, .xls)');
-        return false;
+  const handleSelectFile = useCallback(async () => {
+    try {
+      const filePath = await window.electronAPI.selectFile();
+      if (filePath) {
+        // 从文件路径创建一个模拟的File对象用于显示
+        const fileName = filePath.split('/').pop() || 'unknown.xlsx';
+        const mockFile = new File([], fileName, {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        });
+        
+        // 添加文件大小信息（可以通过fs获取，这里先模拟）
+        Object.defineProperty(mockFile, 'size', {
+          value: 0, // 实际大小需要从主进程获取
+          writable: false
+        });
+        
+        if (onFileSelected) {
+          onFileSelected(mockFile, filePath);
+        }
       }
-
-      const isLt100M = file.size / 1024 / 1024 < 100;
-      if (!isLt100M) {
-        message.error('文件大小不能超过100MB');
-        return false;
-      }
-
-      setUploading(true);
-      
-      // 创建文件路径（在实际应用中，这里可能需要通过Electron API获取真实路径）
-      const filePath = file.name;
-      
-      // 模拟上传过程
-      setTimeout(() => {
-        onFileSelected(file, filePath);
-        setUploading(false);
-        message.success(`${file.name} 文件上传成功`);
-      }, 1000);
-
-      return false; // 阻止自动上传
-    },
-    onDrop(e) {
-      console.log('拖拽文件:', e.dataTransfer.files);
-    },
-  };
-
-  const handleRemoveFile = () => {
-    if (onRemoveFile) {
-      onRemoveFile();
-      message.info('文件已移除');
+    } catch (error) {
+      console.error('选择文件失败:', error);
+      alert('选择文件失败，请重试');
     }
-  };
+  }, [onFileSelected]);
 
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '未知大小';
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -77,55 +51,85 @@ const FileUpload: React.FC<FileUploadProps> = ({
 
   if (selectedFile) {
     return (
-      <Card>
-        <div style={{ textAlign: 'center' }}>
-          <FileExcelOutlined style={{ fontSize: '48px', color: '#52c41a', marginBottom: '16px' }} />
-          <Title level={4}>已选择文件</Title>
-          <Space direction="vertical" size="small">
-            <Text strong>{selectedFile.name}</Text>
-            <Text type="secondary">大小: {formatFileSize(selectedFile.size)}</Text>
-            <Text type="secondary">类型: {selectedFile.type || '未知'}</Text>
+      <Card title="已选择的文件" style={{ marginBottom: '24px' }}>
+        <Space direction="vertical" style={{ width: '100%' }}>
+          <Space>
+            <FileExcelOutlined style={{ color: '#52c41a', fontSize: '20px' }} />
+            <div>
+              <Text strong>{selectedFile.name}</Text>
+              <br />
+              <Text type="secondary">
+                大小: {formatFileSize(selectedFile.size)}
+                {selectedFile.lastModified > 0 && (
+                  <> | 修改时间: {new Date(selectedFile.lastModified).toLocaleString()}</>
+                )}
+              </Text>
+            </div>
           </Space>
-          <div style={{ marginTop: '24px' }}>
-            <Button 
-              icon={<DeleteOutlined />} 
-              onClick={handleRemoveFile}
-              danger
-            >
-              移除文件
-            </Button>
+          
+          <div style={{ marginTop: '16px' }}>
+            <Space>
+              <Button 
+                icon={<FolderOpenOutlined />}
+                onClick={handleSelectFile}
+              >
+                重新选择
+              </Button>
+              <Button 
+                danger 
+                icon={<DeleteOutlined />}
+                onClick={onRemoveFile}
+              >
+                移除文件
+              </Button>
+            </Space>
           </div>
-        </div>
+        </Space>
       </Card>
     );
   }
 
   return (
-    <Card>
-      <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-        <Title level={4}>选择Excel文件</Title>
-        <Text type="secondary">
-          支持 .xlsx 和 .xls 格式文件，最大100MB
+    <Card title="选择Excel文件">
+      <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+        <InboxOutlined style={{ fontSize: '48px', color: '#1890ff', marginBottom: '16px' }} />
+        <Title level={4} style={{ marginBottom: '8px' }}>选择Excel文件</Title>
+        <Text type="secondary" style={{ display: 'block', marginBottom: '24px' }}>
+          支持 .xlsx 和 .xls 格式文件
         </Text>
-      </div>
-      
-      <Dragger {...uploadProps} style={{ padding: '40px' }}>
-        <p className="ant-upload-drag-icon">
-          <InboxOutlined style={{ fontSize: '48px', color: '#1890ff' }} />
-        </p>
-        <p className="ant-upload-text" style={{ fontSize: '16px' }}>
-          点击或拖拽文件到此区域上传
-        </p>
-        <p className="ant-upload-hint" style={{ color: '#999' }}>
-          支持单个文件上传，严格禁止上传公司敏感数据
-        </p>
-      </Dragger>
-
-      {uploading && (
-        <div style={{ textAlign: 'center', marginTop: '16px' }}>
-          <Text type="secondary">正在处理文件...</Text>
+        
+        <Button 
+          type="primary" 
+          size="large"
+          icon={<FolderOpenOutlined />}
+          onClick={handleSelectFile}
+        >
+          浏览文件
+        </Button>
+        
+        <div style={{ marginTop: '16px' }}>
+          <Space wrap>
+            <Tag color="blue">.xlsx</Tag>
+            <Tag color="blue">.xls</Tag>
+            <Tag color="green">本地处理</Tag>
+          </Space>
         </div>
-      )}
+      </div>
+
+      <Alert
+        message="使用提示"
+        description={
+          <ul style={{ margin: 0, paddingLeft: '20px' }}>
+            <li>请确保Excel文件第一行为表头</li>
+            <li>支持多个工作表，默认处理第一个工作表</li>
+            <li>文件将在本地处理，不会上传到服务器</li>
+            <li>建议文件大小不超过100MB以获得最佳性能</li>
+          </ul>
+        }
+        type="info"
+        showIcon
+        style={{ marginTop: '16px' }}
+      />
     </Card>
   );
 };
