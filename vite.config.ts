@@ -10,7 +10,9 @@ export default defineConfig({
     emptyOutDir: true
   },
   server: {
-    port: 3000
+    port: 3000,
+    strictPort: false,  // 允许端口被占用时自动切换
+    host: true
   },
   resolve: {
     alias: {
