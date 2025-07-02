@@ -53,6 +53,15 @@ export const MappingPage: React.FC = () => {
   const [editingMapping, setEditingMapping] = useState<MappingRule | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newMapping, setNewMapping] = useState({ sourceValue: '', targetValue: '' });
+  
+  // 分页状态管理
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  // 当映射数据变化时重置分页
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [userEditedMappings.length]);
 
   // 获取选中列的唯一值
   const getUniqueValues = () => {
@@ -172,6 +181,19 @@ export const MappingPage: React.FC = () => {
     setNewMapping({ sourceValue: '', targetValue: '' });
     setShowAddModal(false);
     message.success('映射规则已添加');
+  };
+
+  // 分页处理函数
+  const handlePageChange = (page: number, size: number) => {
+    console.log('分页变化:', { page, size });
+    setCurrentPage(page);
+    setPageSize(size);
+  };
+
+  const handlePageSizeChange = (current: number, size: number) => {
+    console.log('页面大小变化:', { current, size });
+    setCurrentPage(1); // 重置到第一页
+    setPageSize(size);
   };
 
   // 处理下一步
@@ -418,11 +440,15 @@ export const MappingPage: React.FC = () => {
             dataSource={userEditedMappings}
             rowKey="id"
             pagination={{
-              pageSize: 10,
+              current: currentPage,
+              pageSize: pageSize,
+              total: userEditedMappings.length,
               showSizeChanger: true,
               showQuickJumper: true,
               showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条，共 ${total} 条`,
               pageSizeOptions: ['10', '20', '50', '100'],
+              onChange: handlePageChange,
+              onShowSizeChange: handlePageSizeChange,
               size: 'default'
             }}
             size="small"
