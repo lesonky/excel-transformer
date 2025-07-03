@@ -19,7 +19,11 @@
     "build:win": "node scripts/build-win.js",
     "build:all": "npm run build && electron-builder --mac --win",
     "test-build": "node scripts/test-build.js",
-    "postinstall": "electron-builder install-app-deps"
+    "postinstall": "electron-builder install-app-deps",
+    "electron:rebuild": "electron-rebuild"
+  },
+  "electronRebuild": {
+    "force": true
   },
   "build": {
     "appId": "com.excel-transformer.app",
@@ -176,6 +180,7 @@
     "electron": "^37.1.0",
     "electron-builder": "^26.0.12",
     "electron-devtools-installer": "^4.0.0",
+    "electron-rebuild": "^3.2.9",
     "png2icons": "^2.0.1",
     "sharp": "^0.34.2",
     "typescript": "^5.8.3",
