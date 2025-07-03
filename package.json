@@ -15,6 +15,9 @@
     "generate-icons": "node scripts/generate-icons.js && node scripts/generate-platform-icons.js",
     "pack": "npm run build && electron-builder",
     "dist": "npm run build && electron-builder --publish=never",
+    "build:mac": "node scripts/build-mac.js",
+    "build:win": "node scripts/build-win.js",
+    "build:all": "npm run build && electron-builder --mac --win",
     "test-build": "node scripts/test-build.js",
     "postinstall": "electron-builder install-app-deps"
   },
@@ -34,24 +37,28 @@
       "!node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
       "!node_modules/*.d.ts",
       "!node_modules/.bin",
+      "!node_modules/**/*.map",
+      "!node_modules/**/*.md",
       "!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}",
       "!.editorconfig",
       "!**/._*",
       "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}",
       "!**/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}",
       "!**/{appveyor.yml,.travis.yml,circle.yml}",
-      "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}"
+      "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}",
+      "!**/node_modules/**/test/**/*",
+      "!**/node_modules/**/tests/**/*",
+      "!**/node_modules/**/.github/**/*",
+      "!**/node_modules/**/docs/**/*"
     ],
     "compression": "maximum",
+    "removePackageScripts": true,
+    "removePackageKeywords": true,
     "mac": {
       "category": "public.app-category.productivity",
       "target": [
         {
           "target": "dmg",
-          "arch": ["arm64", "x64"]
-        },
-        {
-          "target": "zip",
           "arch": ["arm64", "x64"]
         }
       ],
@@ -59,7 +66,9 @@
       "hardenedRuntime": true,
       "gatekeeperAssess": false,
       "entitlements": "build/entitlements.mac.plist",
-      "entitlementsInherit": "build/entitlements.mac.plist"
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "artifactName": "Excel字段转换工具-${version}-${arch}.${ext}",
+      "minimumSystemVersion": "10.15.0"
     },
     "win": {
       "target": [
@@ -75,7 +84,9 @@
       "icon": "src/assets/icons/icon.ico",
       "verifyUpdateCodeSignature": false,
       "requestedExecutionLevel": "asInvoker",
-      "artifactName": "Excel字段转换工具-${version}-${arch}.${ext}"
+      "artifactName": "Excel字段转换工具-${version}-${arch}.${ext}",
+      "forceCodeSigning": false,
+      "signAndEditExecutable": false
     },
     "linux": {
       "target": [
@@ -108,11 +119,34 @@
       "menuCategory": "Office",
       "runAfterFinish": true,
       "deleteAppDataOnUninstall": true,
-      "artifactName": "Excel字段转换工具-Setup-${version}.${ext}"
+      "artifactName": "Excel字段转换工具-Setup-${version}-${arch}.${ext}",
+      "include": "build/installer.nsh",
+      "installerHeaderIcon": "src/assets/icons/icon.ico"
     },
     "dmg": {
       "title": "Excel字段转换工具",
-      "icon": "src/assets/icons/icon.icns"
+      "icon": "src/assets/icons/icon.icns",
+      "iconSize": 80,
+      "window": {
+        "width": 540,
+        "height": 380
+      },
+      "contents": [
+        {
+          "x": 130,
+          "y": 220,
+          "type": "file"
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ],
+      "background": null,
+      "format": "ULFO",
+      "artifactName": "Excel字段转换工具-${version}-${arch}.${ext}"
     }
   },
   "keywords": [
