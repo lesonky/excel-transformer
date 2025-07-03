@@ -10,52 +10,48 @@ let mainWindow: BrowserWindow;
 // 获取图标路径的辅助函数
 const getIconPath = (): string => {
   const isDevelopment = process.env.NODE_ENV === 'development';
-  console.log('🔍 图标路径解析 - 当前环境:', isDevelopment ? '开发模式' : '生产模式');
-  console.log('📁 __dirname:', __dirname);
-  console.log('💻 平台:', process.platform);
-  
-  // 获取项目根目录的绝对路径
   const projectRoot = process.cwd();
-  console.log('📂 项目根目录:', projectRoot);
   
+  // 根据平台和环境选择最合适的图标
   const iconPaths: string[] = [];
   
-  // 在开发模式下优先使用PNG格式，因为ICNS在开发模式下可能有兼容性问题
   if (isDevelopment) {
-    // 开发模式优先PNG
-    iconPaths.push(path.join(projectRoot, 'src/assets/icons/icon-256.png'));
+    // 开发模式：优先使用PNG格式（兼容性更好）
     iconPaths.push(path.join(projectRoot, 'src/assets/icons/icon.png'));
-    iconPaths.push(path.join(projectRoot, 'dist/assets/icons/icon-256.png'));
-    iconPaths.push(path.join(projectRoot, 'dist/assets/icons/icon.png'));
-    // macOS ICNS作为备选
+    iconPaths.push(path.join(projectRoot, 'src/assets/icons/icon-256.png'));
+    iconPaths.push(path.join(projectRoot, 'src/assets/icons/icon-128.png'));
+    // 平台特定格式作为备选
     if (process.platform === 'darwin') {
       iconPaths.push(path.join(projectRoot, 'src/assets/icons/icon.icns'));
+    } else if (process.platform === 'win32') {
+      iconPaths.push(path.join(projectRoot, 'src/assets/icons/icon.ico'));
     }
   } else {
-    // 生产模式优先ICNS（macOS）
+    // 生产模式：平台特定格式优先
     if (process.platform === 'darwin') {
       iconPaths.push(path.join(projectRoot, 'dist/assets/icons/icon.icns'));
+      iconPaths.push(path.join(projectRoot, 'src/assets/icons/icon.icns'));
+    } else if (process.platform === 'win32') {
+      iconPaths.push(path.join(projectRoot, 'dist/assets/icons/icon.ico'));
+      iconPaths.push(path.join(projectRoot, 'src/assets/icons/icon.ico'));
     }
-    // PNG作为备选
-    iconPaths.push(path.join(projectRoot, 'dist/assets/icons/icon-256.png'));
     iconPaths.push(path.join(projectRoot, 'dist/assets/icons/icon.png'));
-    iconPaths.push(path.join(projectRoot, 'src/assets/icons/icon-256.png'));
     iconPaths.push(path.join(projectRoot, 'src/assets/icons/icon.png'));
+    iconPaths.push(path.join(projectRoot, 'src/assets/icons/icon-256.png'));
   }
   
-  // 遍历所有可能的路径
+  // 查找第一个存在的图标文件
   for (const iconPath of iconPaths) {
-    console.log('🔍 检查图标路径:', iconPath);
     if (fs.existsSync(iconPath)) {
-      console.log('✅ 找到图标文件:', iconPath);
+      console.log('✅ 使用图标文件:', iconPath);
       return iconPath;
-    } else {
-      console.log('❌ 图标文件不存在:', iconPath);
     }
   }
   
-  console.log('⚠️ 未找到任何图标文件，使用默认路径');
-  return path.join(projectRoot, 'src/assets/icons/icon.png');
+  // 如果都找不到，使用默认图标
+  const fallbackIcon = path.join(projectRoot, 'src/assets/icons/icon.png');
+  console.log('⚠️ 使用默认图标:', fallbackIcon);
+  return fallbackIcon;
 };
 
 const createWindow = async (): Promise<void> => {
@@ -91,26 +87,33 @@ const createWindow = async (): Promise<void> => {
     mainWindow = null as any;
   });
 
-  // 设置应用和Dock图标
+  // 确保窗口图标设置成功
   const iconPath = getIconPath();
-  try {
-    // 设置应用图标
-    if (fs.existsSync(iconPath)) {
+  if (fs.existsSync(iconPath)) {
+    try {
       mainWindow.setIcon(iconPath);
       console.log('✅ 窗口图标设置成功:', iconPath);
+    } catch (error) {
+      console.error('❌ 设置窗口图标失败:', error);
     }
-    
-    // 设置Dock图标（macOS专用）
-    if (process.platform === 'darwin' && app.dock) {
-      app.dock.setIcon(iconPath);
-      console.log('✅ Dock图标设置成功:', iconPath);
-    }
-  } catch (error) {
-    console.error('❌ 设置图标失败:', error);
   }
 };
 
 app.whenReady().then(async () => {
+  // 设置应用图标
+  const iconPath = getIconPath();
+  console.log('🎯 设置应用图标:', iconPath);
+  
+  try {
+    // 在macOS上设置应用图标
+    if (process.platform === 'darwin' && app.dock && fs.existsSync(iconPath)) {
+      app.dock.setIcon(iconPath);
+      console.log('✅ 应用Dock图标设置成功:', iconPath);
+    }
+  } catch (error) {
+    console.error('❌ 设置应用图标失败:', error);
+  }
+
   await createWindow();
 
   app.on('activate', async () => {
