@@ -1,6 +1,6 @@
 {
   "name": "excel-transformer",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Excel字段转换工具",
   "main": "dist/main/main.js",
   "homepage": "./",
