@@ -39,7 +39,8 @@ export class AIService {
       throw new Error('AI服务未初始化，请先配置API KEY');
     }
     
-    const model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    const modelName = await this.configService.getGeminiModel();
+    const model = this.genAI.getGenerativeModel({ model: modelName });
     
     const prompt = this.buildPrompt(request);
     const result = await model.generateContent(prompt);
@@ -51,7 +52,8 @@ export class AIService {
   async testApiKey(apiKey: string): Promise<boolean> {
     try {
       const testAI = new GoogleGenerativeAI(apiKey);
-      const model = testAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+      const modelName = await this.configService.getGeminiModel();
+      const model = testAI.getGenerativeModel({ model: modelName });
       
       // 发送一个简单的测试请求
       const result = await model.generateContent('Hello, please respond with "API key is valid"');

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Input, Button, Alert, Space, Card, Typography, Modal } from 'antd';
-import { KeyOutlined, CheckCircleOutlined, CloseCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { Input, Button, Alert, Space, Card, Typography, Modal, Select } from 'antd';
+import { KeyOutlined, CheckCircleOutlined, CloseCircleOutlined, ExclamationCircleOutlined, RobotOutlined } from '@ant-design/icons';
 
 const { Title, Paragraph, Text } = Typography;
 const { Password } = Input;
@@ -17,6 +17,7 @@ const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({
   onApiKeyConfigured 
 }) => {
   const [apiKey, setApiKey] = useState('');
+  const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash');
   const [isTestingKey, setIsTestingKey] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
@@ -34,6 +35,10 @@ const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({
         const configured = await window.electronAPI.checkApiKeyConfigured();
         setIsConfigured(configured);
         onApiKeyConfigured(configured);
+        
+        // 获取当前配置的模型
+        const currentModel = await window.electronAPI.getGeminiModel();
+        setSelectedModel(currentModel);
       }
     } catch (error) {
       console.error('检查API KEY状态失败:', error);
@@ -68,7 +73,8 @@ const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({
   };
 
   const handleSaveApiKey = async () => {
-    if (!testResult?.success) {
+    // 如果有输入新的API KEY，需要先验证
+    if (apiKey.trim() && !testResult?.success) {
       setTestResult({ success: false, message: '请先验证API KEY' });
       return;
     }
@@ -76,13 +82,23 @@ const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({
     setIsSaving(true);
     try {
       if (window.electronAPI) {
-        await window.electronAPI.saveApiKey(apiKey);
-        setIsConfigured(true);
-        onApiKeyConfigured(true);
-        setApiKey('');
-        setTestResult({ success: true, message: 'API KEY保存成功！' });
+        // 如果有新的API KEY，则保存
+        if (apiKey.trim()) {
+          await window.electronAPI.saveApiKey(apiKey);
+          setIsConfigured(true);
+          onApiKeyConfigured(true);
+          setApiKey('');
+        }
         
-        // 3秒后关闭弹窗
+        // 总是保存模型配置
+        await window.electronAPI.setGeminiModel(selectedModel);
+        
+        setTestResult({ 
+          success: true, 
+          message: apiKey.trim() ? 'API KEY和模型配置保存成功！' : '模型配置保存成功！' 
+        });
+        
+        // 2秒后关闭弹窗
         setTimeout(() => {
           onClose();
           setTestResult(null);
@@ -98,11 +114,9 @@ const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({
     }
   };
 
-  const handleQuickSet = () => {
-    // 设置提供的临时API KEY
-    setApiKey('AIzaSyA1T95HwAJGpIIGCTaCrf0IqiAHcjW8iDc');
-    setTestResult(null);
-  };
+
+
+
 
   return (
     <Modal
@@ -145,31 +159,38 @@ const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({
               size="large"
             />
             
+            <Text strong>Gemini模型：</Text>
+            <Select
+              value={selectedModel}
+              onChange={setSelectedModel}
+              style={{ width: '100%' }}
+              size="large"
+              options={[
+                { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash (推荐)', icon: <RobotOutlined /> },
+                { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro', icon: <RobotOutlined /> }
+              ]}
+            />
+            
             <Space wrap>
-              <Button 
-                onClick={handleTestApiKey}
-                loading={isTestingKey}
-                disabled={!apiKey.trim()}
-                icon={<ExclamationCircleOutlined />}
-              >
-                验证API KEY
-              </Button>
+              {apiKey.trim() && (
+                <Button 
+                  onClick={handleTestApiKey}
+                  loading={isTestingKey}
+                  disabled={!apiKey.trim()}
+                  icon={<ExclamationCircleOutlined />}
+                >
+                  验证API KEY
+                </Button>
+              )}
               
               <Button 
                 type="primary"
                 onClick={handleSaveApiKey}
-                disabled={!testResult?.success}
+                disabled={!!apiKey.trim() && !testResult?.success}
                 loading={isSaving}
                 icon={<CheckCircleOutlined />}
               >
-                保存配置
-              </Button>
-
-              <Button 
-                onClick={handleQuickSet}
-                type="dashed"
-              >
-                使用临时KEY
+                {apiKey.trim() ? '保存配置' : '保存模型配置'}
               </Button>
             </Space>
           </Space>

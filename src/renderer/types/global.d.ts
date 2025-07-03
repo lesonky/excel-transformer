@@ -11,6 +11,10 @@ export interface ElectronAPI {
   testApiKey: (apiKey: string) => Promise<boolean>;
   saveApiKey: (apiKey: string) => Promise<boolean>;
   
+  // Gemini模型配置相关
+  getGeminiModel: () => Promise<string>;
+  setGeminiModel: (model: string) => Promise<void>;
+  
   // 监听器
   onApiKeyStatusChange: (callback: (isConfigured: boolean) => void) => void;
   removeAllListeners: (channel: string) => void;

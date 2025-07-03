@@ -10,44 +10,52 @@ let mainWindow: BrowserWindow;
 // 获取图标路径的辅助函数
 const getIconPath = (): string => {
   const isDevelopment = process.env.NODE_ENV === 'development';
+  console.log('🔍 图标路径解析 - 当前环境:', isDevelopment ? '开发模式' : '生产模式');
+  console.log('📁 __dirname:', __dirname);
+  console.log('💻 平台:', process.platform);
   
-  // macOS优先使用ICNS格式
-  if (process.platform === 'darwin') {
-    if (isDevelopment) {
-      const devIconPath = path.join(__dirname, '../../src/assets/icons/icon.icns');
-      if (fs.existsSync(devIconPath)) {
-        console.log('使用开发模式ICNS图标:', devIconPath);
-        return devIconPath;
-      }
-    }
-    
-    const prodIconPath = path.join(__dirname, '../assets/icons/icon.icns');
-    if (fs.existsSync(prodIconPath)) {
-      console.log('使用生产模式ICNS图标:', prodIconPath);
-      return prodIconPath;
-    }
-  }
+  // 获取项目根目录的绝对路径
+  const projectRoot = process.cwd();
+  console.log('📂 项目根目录:', projectRoot);
   
+  const iconPaths: string[] = [];
+  
+  // 在开发模式下优先使用PNG格式，因为ICNS在开发模式下可能有兼容性问题
   if (isDevelopment) {
-    // 开发模式：从源文件夹读取
-    const devIconPath = path.join(__dirname, '../../src/assets/icons/icon-256.png');
-    if (fs.existsSync(devIconPath)) {
-      console.log('使用开发模式PNG图标:', devIconPath);
-      return devIconPath;
+    // 开发模式优先PNG
+    iconPaths.push(path.join(projectRoot, 'src/assets/icons/icon-256.png'));
+    iconPaths.push(path.join(projectRoot, 'src/assets/icons/icon.png'));
+    iconPaths.push(path.join(projectRoot, 'dist/assets/icons/icon-256.png'));
+    iconPaths.push(path.join(projectRoot, 'dist/assets/icons/icon.png'));
+    // macOS ICNS作为备选
+    if (process.platform === 'darwin') {
+      iconPaths.push(path.join(projectRoot, 'src/assets/icons/icon.icns'));
+    }
+  } else {
+    // 生产模式优先ICNS（macOS）
+    if (process.platform === 'darwin') {
+      iconPaths.push(path.join(projectRoot, 'dist/assets/icons/icon.icns'));
+    }
+    // PNG作为备选
+    iconPaths.push(path.join(projectRoot, 'dist/assets/icons/icon-256.png'));
+    iconPaths.push(path.join(projectRoot, 'dist/assets/icons/icon.png'));
+    iconPaths.push(path.join(projectRoot, 'src/assets/icons/icon-256.png'));
+    iconPaths.push(path.join(projectRoot, 'src/assets/icons/icon.png'));
+  }
+  
+  // 遍历所有可能的路径
+  for (const iconPath of iconPaths) {
+    console.log('🔍 检查图标路径:', iconPath);
+    if (fs.existsSync(iconPath)) {
+      console.log('✅ 找到图标文件:', iconPath);
+      return iconPath;
+    } else {
+      console.log('❌ 图标文件不存在:', iconPath);
     }
   }
   
-  // 生产模式：从dist文件夹读取  
-  const prodIconPath = path.join(__dirname, '../assets/icons/icon-256.png');
-  if (fs.existsSync(prodIconPath)) {
-    console.log('使用生产模式PNG图标:', prodIconPath);
-    return prodIconPath;
-  }
-  
-  // 备用路径
-  const fallbackPath = path.join(__dirname, '../../src/assets/icons/icon-256.png');
-  console.log('使用备用图标路径:', fallbackPath);
-  return fallbackPath;
+  console.log('⚠️ 未找到任何图标文件，使用默认路径');
+  return path.join(projectRoot, 'src/assets/icons/icon.png');
 };
 
 const createWindow = async (): Promise<void> => {
@@ -83,15 +91,22 @@ const createWindow = async (): Promise<void> => {
     mainWindow = null as any;
   });
 
-  // 设置Dock图标（macOS专用）
-  if (process.platform === 'darwin' && app.dock) {
-    const iconPath = getIconPath();
-    try {
-      app.dock.setIcon(iconPath);
-      console.log('Dock图标设置成功:', iconPath);
-    } catch (error) {
-      console.error('设置Dock图标失败:', error);
+  // 设置应用和Dock图标
+  const iconPath = getIconPath();
+  try {
+    // 设置应用图标
+    if (fs.existsSync(iconPath)) {
+      mainWindow.setIcon(iconPath);
+      console.log('✅ 窗口图标设置成功:', iconPath);
     }
+    
+    // 设置Dock图标（macOS专用）
+    if (process.platform === 'darwin' && app.dock) {
+      app.dock.setIcon(iconPath);
+      console.log('✅ Dock图标设置成功:', iconPath);
+    }
+  } catch (error) {
+    console.error('❌ 设置图标失败:', error);
   }
 };
 
@@ -151,6 +166,25 @@ ipcMain.handle('get-api-key', async (): Promise<string | null> => {
   } catch (error) {
     console.error('获取API KEY失败:', error);
     return null;
+  }
+});
+
+// IPC处理器 - Gemini模型配置相关
+ipcMain.handle('get-gemini-model', async (): Promise<string> => {
+  try {
+    return await configService.getGeminiModel();
+  } catch (error) {
+    console.error('获取Gemini模型失败:', error);
+    return 'gemini-2.5-flash'; // 返回默认值
+  }
+});
+
+ipcMain.handle('set-gemini-model', async (_, model: string): Promise<void> => {
+  try {
+    await configService.setGeminiModel(model);
+  } catch (error) {
+    console.error('设置Gemini模型失败:', error);
+    throw error;
   }
 });
 
@@ -432,4 +466,4 @@ ipcMain.handle('open-external', async (event, url: string) => {
     console.error('打开外部链接失败:', error);
     throw new Error(`打开外部链接失败: ${error.message}`);
   }
-}); 
+});

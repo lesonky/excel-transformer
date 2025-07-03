@@ -5,6 +5,7 @@ import * as fs from 'fs';
 
 interface AppConfig {
   geminiApiKey?: string;
+  geminiModel?: string;
   lastUsedPath?: string;
   theme?: 'light' | 'dark';
 }
@@ -40,6 +41,17 @@ export class ConfigService {
   async isApiKeyConfigured(): Promise<boolean> {
     const apiKey = await this.getApiKey();
     return apiKey !== null && apiKey.length > 0;
+  }
+
+  async setGeminiModel(model: string): Promise<void> {
+    const config = await this.loadConfig();
+    config.geminiModel = model;
+    await this.saveConfig(config);
+  }
+
+  async getGeminiModel(): Promise<string> {
+    const config = await this.loadConfig();
+    return config.geminiModel || 'gemini-2.5-flash'; // 默认值
   }
   
   private encrypt(text: string): string {

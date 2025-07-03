@@ -28,6 +28,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   testApiKey: (apiKey: string) => ipcRenderer.invoke('test-api-key', apiKey),
   saveApiKey: (apiKey: string) => ipcRenderer.invoke('save-api-key', apiKey),
   
+  // Gemini模型配置相关
+  getGeminiModel: () => ipcRenderer.invoke('get-gemini-model'),
+  setGeminiModel: (model: string) => ipcRenderer.invoke('set-gemini-model', model),
+  
   // Excel处理相关
   parseExcel: (filePath: string, worksheetName?: string) => ipcRenderer.invoke('parse-excel', filePath, worksheetName),
   transformExcel: (params: {
