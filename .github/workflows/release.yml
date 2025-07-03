@@ -55,8 +55,6 @@ jobs:
 
       - name: 安装依赖
         run: npm ci
-        env:
-          npm_config_build_from_source: true
 
       - name: 重建原生模块
         run: npm run electron:rebuild
