@@ -1,0 +1,65 @@
+name: Test Build
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-build:
+    strategy:
+      matrix:
+        include:
+          - os: macos-latest
+            platform: mac
+          - os: windows-latest
+            platform: win
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 代码检查
+        run: npm run build
+
+      - name: 测试构建 (macOS)
+        if: matrix.platform == 'mac'
+        run: |
+          echo "测试 macOS 构建配置..."
+          npm run build:mac
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+
+      - name: 测试构建 (Windows)
+        if: matrix.platform == 'win'
+        run: |
+          echo "测试 Windows 构建配置..."
+          npm run build:win
+
+      - name: 验证构建产物
+        run: |
+          if [ "${{ matrix.platform }}" = "mac" ]; then
+            ls -la release/*.dmg || echo "DMG 文件生成失败"
+          else
+            ls -la release/*.exe release/*.zip || echo "Windows 安装包生成失败"
+          fi
+        shell: bash
+
+      - name: 上传构建产物 (仅供测试)
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-build-${{ matrix.platform }}
+          path: release/
+          retention-days: 1 

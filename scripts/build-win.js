@@ -22,7 +22,12 @@ try {
 
   // 只为 Windows 打包
   console.log('📦 开始打包 Windows 版本...');
-  execSync('npx electron-builder --win --x64 --arm64', { 
+  
+  // 在 Windows 环境下构建 NSIS 安装包，其他环境构建 ZIP
+  const isWindows = process.platform === 'win32';
+  const targets = isWindows ? '--win nsis zip --x64 --arm64' : '--win zip --x64 --arm64';
+  
+  execSync(`npx electron-builder ${targets}`, { 
     stdio: 'inherit',
     env: { 
       ...process.env, 

@@ -1,0 +1,165 @@
+name: Release Build
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v1.0.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: macos-latest
+            platform: mac
+            arch: x64,arm64
+          - os: windows-latest
+            platform: win
+            arch: x64,arm64
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 构建应用 (macOS)
+        if: matrix.platform == 'mac'
+        run: npm run build:mac
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+
+      - name: 构建应用 (Windows)
+        if: matrix.platform == 'win'
+        run: npm run build:win
+
+      - name: 获取版本号
+        id: version
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 上传 macOS 构建产物
+        if: matrix.platform == 'mac'
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-builds
+          path: |
+            release/*.dmg
+            release/*.dmg.blockmap
+
+      - name: 上传 Windows 构建产物
+        if: matrix.platform == 'win'
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-builds
+          path: |
+            release/*.exe
+            release/*.zip
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 获取版本号
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 下载所有构建产物
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: 显示构建产物
+        run: |
+          find artifacts -type f -name "*" -exec ls -lh {} \;
+
+      - name: 创建发布说明
+        id: release_notes
+        run: |
+          cat > release_notes.md << 'EOF'
+          ## Excel字段转换工具 ${{ steps.version.outputs.version }}
+
+          ### 📦 安装包下载
+
+          #### macOS
+          - **Intel 芯片**: Excel字段转换工具-*-x64.dmg
+          - **Apple Silicon**: Excel字段转换工具-*-arm64.dmg
+
+          #### Windows
+          - **64位安装包**: Excel字段转换工具-Setup-*-x64.exe
+          - **ARM64安装包**: Excel字段转换工具-Setup-*-arm64.exe
+          - **64位便携版**: Excel字段转换工具-*-x64.zip
+          - **ARM64便携版**: Excel字段转换工具-*-arm64.zip
+
+          ### ✨ 主要功能
+          - Excel 文件字段智能转换
+          - 基于 Google Gemini AI 的智能映射
+          - 支持自定义转换规则
+          - 跨平台支持（macOS、Windows）
+
+          ### 📋 系统要求
+          - **macOS**: 10.15.0 或更高版本
+          - **Windows**: Windows 10 或更高版本
+
+          ### 🔧 安装说明
+          - **macOS**: 下载 DMG 文件，拖拽到应用程序文件夹
+          - **Windows**: 下载 EXE 安装包运行，或下载 ZIP 便携版解压使用
+
+          ---
+          *此版本通过 GitHub Actions 自动构建和发布*
+          EOF
+
+      - name: 创建 Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: Excel字段转换工具 ${{ steps.version.outputs.version }}
+          body_path: release_notes.md
+          draft: false
+          prerelease: false
+          files: |
+            artifacts/macos-builds/*.dmg
+            artifacts/windows-builds/*.exe
+            artifacts/windows-builds/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 清理工件
+        uses: geekyeggo/delete-artifact@v4
+        with:
+          name: |
+            macos-builds
+            windows-builds 

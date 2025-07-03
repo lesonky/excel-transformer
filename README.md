@@ -78,12 +78,35 @@ npm run build:electron
 # 生成高质量图标
 npm run generate-icons
 
-# 打包应用程序
+# 平台特定构建
+npm run build:mac     # 构建 macOS DMG 安装包
+npm run build:win     # 构建 Windows 安装包和便携版
+npm run build:all     # 构建所有平台
+
+# 打包应用程序（已废弃，请使用上述平台特定命令）
 npm run pack
 
-# 生成分发包
+# 生成分发包（已废弃，请使用上述平台特定命令）  
 npm run dist
 ```
+
+### 🚀 自动化发布
+
+项目配置了 GitHub Actions 自动化工作流：
+
+```bash
+# 创建并推送 release tag 触发自动构建和发布
+git tag -a v1.0.0 -m "Release v1.0.0"
+git push origin v1.0.0
+
+# 或者在 GitHub Actions 页面手动触发构建
+```
+
+**自动生成的安装包：**
+- macOS: DMG 安装包（Intel + Apple Silicon）
+- Windows: NSIS 安装包 + ZIP 便携版（x64 + ARM64）
+
+详见：[GitHub Actions 使用文档](GITHUB_ACTIONS.md)
 
 ## 项目结构
 
@@ -153,6 +176,8 @@ excel-transformer/
 - [x] GUI界面开发
 - [x] AI映射生成功能
 - [x] 数据转换引擎
+- [x] GitHub Actions 自动化构建和发布
+- [x] 跨平台客户端打包（macOS + Windows）
 
 ## 贡献
 
