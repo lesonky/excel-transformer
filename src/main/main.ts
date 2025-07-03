@@ -1,9 +1,9 @@
 import { app, BrowserWindow, ipcMain, dialog, shell } from 'electron';
 import path from 'path';
 import fs from 'fs';
-import { ConfigService } from './services/ConfigService';
-import { AIService } from './services/AIService';
-import ExcelService from './services/ExcelService';
+import { ConfigService } from './services/ConfigService.js';
+import { AIService } from './services/AIService.js';
+import ExcelService from './services/ExcelService.js';
 
 let mainWindow: BrowserWindow;
 

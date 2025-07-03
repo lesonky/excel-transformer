@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { ConfigService } from './ConfigService';
+import { ConfigService } from './ConfigService.js';
 
 export interface MappingRequest {
   originalValues: string[];
