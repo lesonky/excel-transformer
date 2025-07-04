@@ -52,12 +52,8 @@ jobs:
 
       - name: Build application
         run: |
-          # 使用CI专用的Vite配置
-          echo "Building with Vite..."
           npx vite build --config vite.config.ci.mjs
-          echo "Building Electron main process..."
           npm run build:electron
-          echo "Build completed successfully"
         shell: bash
 
       - name: Package for macOS
@@ -66,7 +62,6 @@ jobs:
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
           NODE_ENV: production
-          DEBUG: electron-builder
 
       - name: Package for Windows
         if: matrix.platform == 'win'
@@ -74,7 +69,6 @@ jobs:
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
           NODE_ENV: production
-          DEBUG: electron-builder
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
