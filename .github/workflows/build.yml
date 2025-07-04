@@ -45,12 +45,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: |
-          npm ci
-          # 显示版本信息用于调试
-          node --version
-          npm --version
-          npx electron --version
+        run: npm ci
 
       - name: Generate icons
         run: npm run generate-icons
