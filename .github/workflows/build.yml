@@ -50,7 +50,16 @@ jobs:
         run: npm run generate-icons
 
       - name: Build application
-        run: npm run ${{ matrix.build_script }}
+        run: |
+          # 使用CI专用的Vite配置
+          npx vite build --config vite.config.ci.mjs
+          npm run build:electron
+          # 根据平台选择打包命令
+          if [ "${{ matrix.platform }}" = "mac" ]; then
+            npx electron-builder --mac --x64 --arm64
+          elif [ "${{ matrix.platform }}" = "win" ]; then
+            npx electron-builder --win --x64 --arm64
+          fi
         env:
           # Skip code signing
           CSC_IDENTITY_AUTO_DISCOVERY: false
