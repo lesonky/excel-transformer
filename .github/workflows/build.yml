@@ -34,8 +34,9 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20.11.1'  # 锁定与本地相同的版本
           cache: 'npm'
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Install Python (Windows)
         if: matrix.os == 'windows-latest'
@@ -44,7 +45,12 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          npm ci
+          # 显示版本信息用于调试
+          node --version
+          npm --version
+          npx electron --version
 
       - name: Generate icons
         run: npm run generate-icons
@@ -52,8 +58,11 @@ jobs:
       - name: Build application
         run: |
           # 使用CI专用的Vite配置
+          echo "Building with Vite..."
           npx vite build --config vite.config.ci.mjs
+          echo "Building Electron main process..."
           npm run build:electron
+          echo "Build completed successfully"
         shell: bash
 
       - name: Package for macOS
